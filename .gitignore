@@ -1,0 +1,24 @@
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj.user
+
+# Google Drive / Windows clutter
+desktop.ini
+Thumbs.db
+
+# HMD downloads: not redistributable, re-create with code/01_* and code/02_*
+data_inter/e0_hmd.rds
+data_inter/ltables_hmd.rds
+data_inter/deaths_exposures_hmd.rds
+data_inter/exploratory/
+
+# exploratory outputs and working documents
+figures/exploratory/
+others/
+
+# Rscript side-effects and local tool settings
+Rplots.pdf
+.claude/

@@ -1,0 +1,5 @@
+sex,cohort,direction,n_ags,age_groups
+f,1900,narrowing,2,"40_49, 50_59"
+f,1901,narrowing,2,"60_69, 70_79"
+m,1880,narrowing,2,"70_79, 90_99"
+m,1901,narrowing,2,"60_69, 70_79"
