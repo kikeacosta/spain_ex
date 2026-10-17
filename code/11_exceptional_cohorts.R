@@ -68,3 +68,51 @@ print(exceptional %>% count(sex, ags) %>% pivot_wider(names_from = sex, values_f
 
 write_csv(exceptional, "data_inter/exceptional_cohorts.csv")
 write_csv(disprop, "data_inter/disproportionate_cohorts.csv")
+
+# ------------------------------------------------------------------------------
+# Power check on the simulated scenarios of Figure S3 (08_figS3_simulation_scc.R)
+#
+# The same two-sided criterion is applied to the simulated cohort contributions.
+# In scenario B (cohorts 1945-1954 with 15% lower mortality) it should flag the
+# two edges of the block: the cohort replaced by the first advantaged one (1944,
+# narrowing) and the last advantaged cohort (1954, widening). In the period-only
+# scenarios (A and C) any flagged cohort is an edge of the period band, which
+# falls on a different cohort in each age interval and therefore never meets
+# the replication requirement across age intervals (one simulated comparator
+# only, so the comparator condition cannot be applied).
+# Output: data_inter/exceptional_cohorts_simulation.csv
+# ------------------------------------------------------------------------------
+sim <- 
+  read_rds("data_inter/simulation_scc.rds") %>% 
+  mutate(scen = str_sub(as.character(scen), 1, 1))
+
+flags_sim <- 
+  sim %>% 
+  group_by(scen, ags) %>% 
+  arrange(cohort, .by_group = TRUE) %>% 
+  mutate(nb_mean = sapply(row_number(), function(i){
+           j <- setdiff(max(1, i - k_each_side):min(n(), i + k_each_side), i)
+           mean(dt_coh[j]) }),
+         nb_sd = sapply(row_number(), function(i){
+           j <- setdiff(max(1, i - k_each_side):min(n(), i + k_each_side), i)
+           sd(dt_coh[j]) }),
+         dev = dt_coh - nb_mean,
+         exceptional = abs(dev) > z * nb_sd,
+         direction = ifelse(dev < 0, "narrowing", "widening")) %>% 
+  ungroup() %>% 
+  filter(exceptional) %>% 
+  select(scen, ags, cohort, scc, dev, nb_sd, direction)
+
+cat("\n--- simulation: exceptional cohorts by scenario and age interval\n")
+print(flags_sim %>% 
+        group_by(scen, ags) %>% 
+        summarise(flagged = paste0(cohort, ifelse(direction == "narrowing", "(-)", "(+)"), collapse = " "), 
+                  .groups = "drop"), n = 40)
+
+cat("\n--- simulation: cohorts exceptional in >=", min_ags, "age intervals (same direction)\n")
+print(flags_sim %>% 
+        reframe(n_ags = n_distinct(ags), .by = c(scen, cohort, direction)) %>% 
+        filter(n_ags >= min_ags) %>% 
+        arrange(scen, cohort))
+
+write_csv(flags_sim, "data_inter/exceptional_cohorts_simulation.csv")
