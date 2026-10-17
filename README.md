@@ -32,7 +32,7 @@ Derived results that are small and not raw HMD data are kept in the repository:
 | `data_inter/simulation_scc.rds` | `08_figS3_simulation_scc.R` | simulated cohort contributions (three scenarios) |
 | `data_inter/cohort_conts_gap_changes_altref.RData` | `09_figS1_alternative_reference.R` | same as Figure 5 with the alternative reference set |
 | `data_inter/tableS4_convergence_1940_1960.csv` | `10_tableS4_convergence_1940_1960.R` | LE change and gap reduction 1940-1960 by sex and comparator |
-| `data_inter/exceptional_cohorts.csv`, `disproportionate_cohorts.csv`, `exceptional_cohorts_simulation.csv` | `11_exceptional_cohorts.R` | contributions flagged by the exceptionality criterion, in the data and in the simulation (power check) |
+| `data_inter/exceptional_cohorts.csv`, `disproportionate_cohorts.csv`, `block_pairs.csv`, `exceptional_cohorts_simulation.csv`, `exceptional_cohorts_sensitivity.csv` | `11_exceptional_cohorts.R` | exceptionality criterion: flagged contributions, replicated single peaks, opposite-signed pairs (block signature), power check on the simulation, sensitivity |
 | `data_inter/lexis_gap_contributions.rds` | `12_figS6_lexis_gap_contributions.R` | annual changes in the age-specific contributions to the e0 gap |
 
 ## Pipeline
@@ -53,7 +53,7 @@ scripts in `code/` in order:
 | `08_figS3_simulation_scc.R` | **Figure S3**: simulated cohort contributions under period-only and cohort-advantage scenarios, run through the same functions as Figure 5 |
 | `09_figS1_alternative_reference.R` | **Figure S1**: Figure 5 with an alternative reference set (Denmark, England and Wales or the UK, France) |
 | `10_tableS4_convergence_1940_1960.R` | **Table S4**: LE change and gap reduction in the 1940s, 1950s and 1940-1960, by sex and comparator |
-| `11_exceptional_cohorts.R` | exceptionality criterion for cohort contributions (Methods, Step 3) and its power check on the simulation (Table S5.1); parameters at the top of the script |
+| `11_exceptional_cohorts.R` | exceptionality criterion for cohort contributions (Methods, Step 3; Tables S5.1-S5.3): robust score against the ten neighbouring cohorts, two-sided, edges excluded, replication across comparators and age intervals, block-pair signature, power check on the simulation and sensitivity; parameters at the top of the script |
 | `12_figS6_lexis_gap_contributions.R` | **Figure S6**: Lexis surfaces of the annual changes in the age-specific contributions to the e0 gap, by sex and comparator |
 
 Figures are written to `figures/manuscript/` and `figures/supplement/`.
@@ -108,6 +108,20 @@ R (>= 4.3) with: `tidyverse`, `HMDHFDplus`, `Epi`, `MASS`, `splines`,
   each cohort's Lexis diagonal (only cohorts with a defined change at every
   age of the group), then divided by the largest absolute contribution within
   each sex, age group and country (scaled cohort contribution, SCC).
+- **Exceptionality criterion (script 11, Tables S5.1-S5.3).** A cohort
+  contribution is exceptional when its robust z-score against the ten
+  neighbouring cohorts (median and scaled MAD, same sex, age interval and
+  comparator) exceeds 3 in absolute value; the first and last five cohorts of
+  each interval are not tested. A single peak is disproportionate when the
+  same sign recurs in at least three comparators within an interval and in at
+  least two intervals (period changes fall on different cohorts in different
+  intervals, cohort deviations on the same one). A block of advantaged
+  cohorts shows as a narrowing peak at its entry and a widening peak at its
+  exit, so opposite-signed pairs 2-15 cohorts apart are searched for and
+  replicated in the same way. The criterion detects discontinuities, not
+  gradual cohort advantages. It is validated on the simulation (scenario B:
+  edges 1944 and 1954) and reported for seven settings of scale, window and
+  threshold.
 - **Figure S3.** Same functions applied to simulated mortality surfaces
   (Siler baseline declining 2% a year; Spanish excess log-mortality with a
   logistic catch-up centred in 1950, with or without a 15% advantage for the
