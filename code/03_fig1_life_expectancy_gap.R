@@ -1,20 +1,22 @@
 # ==============================================================================
-# 03. Figure 1. Life expectancy at birth (1908-2019) in Spain and the four
-#     reference countries (panel A) and the gap between Spain and their
-#     unweighted mean (panel B). Shaded bands: Civil War (1936-1939) and the
-#     1940-1960 catch-up period; annotated points: gap in 1939, 1940 and 1960.
+# 03. Figure 1. Life expectancy at birth (1908-2023) in Spain and the four
+#     reference countries (panel A) and the gap between their unweighted mean
+#     and Spain (REF - ESP, panel B; positive values = Spain behind). Shaded
+#     bands: Civil War (1936-1939) and the 1940-1960 catch-up period;
+#     annotated points: gap in 1939, 1940 and 1960.
 # Input : data_inter/e0_hmd.rds (01_hmd_life_tables.R)
 # Output: figures/manuscript/fig01_life_expectancy_gap.png
 # ==============================================================================
 rm(list = ls()); gc()
 library(tidyverse)
 library(patchwork)
+source("code/00_functions.R")   # figure typeface (serif)
 
 e0 <- read_rds("data_inter/e0_hmd.rds")
 
 cts_ref <- c("NLD", "NOR", "SWE", "CHE")
 ymin <- 1908 # first year with Spanish data in the HMD
-ymax <- 2019
+ymax <- 2023
 
 names_cts <- c(ESP = "Spain", NLD = "Netherlands", NOR = "Norway",
                SWE = "Sweden", CHE = "Switzerland",
@@ -39,11 +41,11 @@ gap <-
   filter(code == "ESP") %>%
   select(year, esp = ex) %>%
   inner_join(ref %>% select(year, ref = ex), by = "year") %>%
-  mutate(gap = esp - ref)
+  mutate(gap = ref - esp) # REF - ESP: positive = Spain behind
 
 # values quoted in the manuscript
-gap %>% filter(year %in% c(1908, 1935, 1939, 1940, 1960, 2019))
-gap %>% slice_min(gap)
+gap %>% filter(year %in% c(1908, 1935, 1939, 1940, 1943, 1960, 2019, 2023))
+gap %>% slice_max(gap)
 
 # shaded periods ---------------------------------------------------------------
 bands <- tibble(xmin = c(1936, 1940), xmax = c(1939, 1960),
@@ -69,7 +71,7 @@ pA <-
   scale_linewidth_manual(values = c(ESP = 1.2, NLD = .5, NOR = .5,
                                     SWE = .5, CHE = .5, REF = .7),
                          labels = names_cts, name = NULL)+
-  scale_x_continuous(breaks = seq(1910, 2010, 10))+
+  scale_x_continuous(breaks = seq(1910, 2020, 10))+
   scale_y_continuous(breaks = seq(30, 90, 10))+
   coord_cartesian(xlim = c(ymin, ymax), ylim = c(28, 92), expand = FALSE)+
   labs(y = "Life expectancy at birth (years)", x = NULL)+
@@ -86,7 +88,7 @@ pts <-
   filter(year %in% c(1939, 1940, 1960)) %>%
   mutate(lab = sprintf("%d: %.1f", year, gap),
          xlab = c(1926, 1958, 1968),
-         ylab = c(-22, -21, -8))
+         ylab = c(22, 21, 8))
 
 pB <-
   ggplot()+
@@ -99,9 +101,9 @@ pB <-
   geom_point(data = pts, aes(year, gap), colour = cols[["ESP"]], size = 2.2)+
   geom_label(data = pts, aes(xlab, ylab, label = lab), size = 3,
              linewidth = 0, fill = "white", colour = "grey20")+
-  scale_x_continuous(breaks = seq(1910, 2010, 10))+
-  coord_cartesian(xlim = c(ymin, ymax), ylim = c(-24, 3), expand = FALSE)+
-  labs(y = "Gap (years)\nSpain - reference mean", x = "Year")+
+  scale_x_continuous(breaks = seq(1910, 2020, 10))+
+  coord_cartesian(xlim = c(ymin, ymax), ylim = c(-3, 24), expand = FALSE)+
+  labs(y = "Gap (years)\nReference mean - Spain", x = "Year")+
   theme_bw()+
   theme(panel.grid.minor = element_blank())
 

@@ -1,7 +1,7 @@
 # ==============================================================================
 # 07. Figure 5. Scaled cohort-specific contributions (SCC) to the change in the
 #     partial life expectancy gap between Spain and each reference country
-#     (CHE, NLD, NOR, SWE), 1940-2019, by sex and 10-year age group.
+#     (CHE, NLD, NOR, SWE), 1940-2023, by sex and 10-year age group.
 #
 # For each age group the gap in partial life expectancy (reference minus
 # Spain) is decomposed by single age every year with the symmetric Arriaga
@@ -16,14 +16,14 @@
 # Output: data_inter/cohort_conts_gap_changes.RData (decomposition results)
 #         figures/manuscript/fig05_cohort_contributions_gap.png
 # Note  : the decomposition loop takes a few minutes (11 age groups x 4
-#         countries x 80 years x 3 sexes, in both directions).
+#         countries x 84 years x 3 sexes, in both directions).
 # ==============================================================================
 rm(list = ls()); gc()
 source("code/00_functions.R")
 
 cts_ref <- c("SWE", "CHE", "NOR", "NLD")
 ymin <- 1940
-ymax <- 2019
+ymax <- 2023
 
 hmd_lt <-
   read_rds("data_inter/ltables_hmd.rds") %>%

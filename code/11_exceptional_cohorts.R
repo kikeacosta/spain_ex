@@ -1,7 +1,9 @@
 # ==============================================================================
 # 11. Operational criterion for exceptional and disproportionate cohort
-#     contributions (Methods, Step 3), its power check on the simulation of
-#     Figure S3, and a sensitivity analysis.
+#     contributions (Methods, Step 3; Supplementary Material S5), its power
+#     check on the simulation of Figure S3 and a sensitivity analysis. The
+#     same criterion is applied to the alternative reference set of
+#     Supplementary Material S1.
 #
 # What the criterion looks for. The cohort-indexed decomposition of Figure 5
 # assigns the change in the LE gap to cohort positions. A period change spreads
@@ -14,7 +16,7 @@
 # cohorts: such a pattern is indistinguishable from period change in this
 # decomposition and is the object of the d-APC analysis (Figures 3 and S2).
 #
-# Definitions (parameters below).
+# Definitions (parameters below; functions in 00_functions.R).
 #   Neighbourhood : the k_each_side cohorts on each side of cohort c, in the
 #                   same sex, age interval and comparator (default 5 + 5).
 #   Robust score  : z_c = (Cc - median of neighbours) / (1.4826 * MAD of
@@ -42,15 +44,18 @@
 #                   comparators in at least min_ags age intervals.
 #
 # Input : data_inter/cohort_conts_gap_changes.RData (07_fig5_cohort_contributions_gap.R)
+#         data_inter/cohort_conts_gap_changes_altref.RData (09_figS1_alternative_reference.R)
 #         data_inter/simulation_scc.rds (08_figS3_simulation_scc.R)
-# Output: data_inter/exceptional_cohorts.csv            all flagged contributions
-#         data_inter/disproportionate_cohorts.csv       single peaks meeting the criterion
-#         data_inter/block_pairs.csv                    opposite-signed pairs found
-#         data_inter/exceptional_cohorts_simulation.csv power check on the simulation
-#         data_inter/exceptional_cohorts_sensitivity.csv results for other settings
+# Output: data_inter/exceptional_cohorts.csv              all flagged contributions
+#         data_inter/disproportionate_cohorts.csv         single peaks meeting the criterion
+#         data_inter/block_pairs.csv                      opposite-signed pairs found
+#         data_inter/tableS5_1_exceptional_by_age_sex.csv flagged contributions by age interval, sex and sign (Table S5.1)
+#         data_inter/exceptional_cohorts_simulation.csv   power check on the simulation (Table S5.2)
+#         data_inter/exceptional_cohorts_sensitivity.csv  results for other settings (Table S5.3)
+#         data_inter/exceptional_cohorts_altref.csv       flagged contributions, alternative reference set (S1)
 # ==============================================================================
 rm(list = ls()); gc()
-library(tidyverse)
+source("code/00_functions.R")
 
 # parameters -------------------------------------------------------------------
 k_each_side <- 5    # neighbouring cohorts on each side (10 in total)
@@ -59,112 +64,53 @@ min_ags     <- 2    # age intervals in which the signal must recur
 min_cts     <- 3    # comparator countries in which it must recur (out of 4)
 L_max       <- 15   # longest block of cohorts considered for the pair signature
 
-# functions --------------------------------------------------------------------
-# robust z-score of each value against its neighbours (excluding itself);
-# NA for the first and last k cohorts (one-sided neighbourhoods are not tested)
-robust_z <- function(x, k = k_each_side){
-  n <- length(x)
-  sapply(seq_len(n), function(i){
-    if (i <= k | i > n - k) return(NA_real_)
-    j <- setdiff((i - k):(i + k), i)
-    (x[i] - median(x[j])) / (1.4826 * mad(x[j], constant = 1))
-  })
-}
-
-# classical version used in a first version of the criterion (sensitivity)
-sd_z <- function(x, k = k_each_side){
-  n <- length(x)
-  sapply(seq_len(n), function(i){
-    if (i <= k | i > n - k) return(NA_real_)
-    j <- setdiff((i - k):(i + k), i)
-    (x[i] - mean(x[j])) / sd(x[j])
-  })
-}
-
-# flag exceptional contributions within each group
-flag_exceptional <- function(dt, groups, k = k_each_side, z = z_thr, scale = c("mad", "sd")){
-  scale <- match.arg(scale)
-  dt %>%
-    group_by(across(all_of(groups))) %>%
-    arrange(cohort, .by_group = TRUE) %>%
-    mutate(z_score = if (scale == "mad") robust_z(dt_coh, k) else sd_z(dt_coh, k),
-           exceptional = !is.na(z_score) & abs(z_score) > z,
-           direction = ifelse(z_score < 0, "narrowing", "widening")) %>%
-    ungroup()
-}
-
-# single peaks recurring across comparators and age intervals
-disproportionate_peaks <- function(flags, min_cts, min_ags){
-  flags %>%
-    filter(exceptional) %>%
-    reframe(n_cts = n_distinct(cts), .by = c(sex, cohort, ags, direction)) %>%
-    filter(n_cts >= min_cts) %>%
-    reframe(n_ags = n_distinct(ags),
-            age_groups = paste(sort(as.character(ags)), collapse = ", "),
-            .by = c(sex, cohort, direction)) %>%
-    filter(n_ags >= min_ags) %>%
-    arrange(sex, cohort)
-}
-
-# opposite-signed pairs within each group: entry and exit of a block
-block_pairs <- function(flags, groups, L_max){
-  flags %>%
-    filter(exceptional) %>%
-    group_by(across(all_of(groups))) %>%
-    group_modify(function(d, g){
-      a <- d$cohort[d$direction == "narrowing"]
-      b <- d$cohort[d$direction == "widening"]
-      adv <- expand_grid(entry = a, exit = b) %>% filter(exit - entry >= 2, exit - entry <= L_max) %>% mutate(block = "advantaged")
-      dis <- expand_grid(entry = b, exit = a) %>% filter(exit - entry >= 2, exit - entry <= L_max) %>% mutate(block = "disadvantaged")
-      bind_rows(adv, dis)
-    }) %>%
-    ungroup() %>%
-    mutate(length = exit - entry)
-}
-
-# pairs recurring across comparators and age intervals
-disproportionate_blocks <- function(pairs, min_cts, min_ags){
-  pairs %>%
-    reframe(n_cts = n_distinct(cts), .by = c(sex, block, entry, exit, ags)) %>%
-    filter(n_cts >= min_cts) %>%
-    reframe(n_ags = n_distinct(ags),
-            age_groups = paste(sort(as.character(ags)), collapse = ", "),
-            .by = c(sex, block, entry, exit)) %>%
-    filter(n_ags >= min_ags) %>%
-    arrange(sex, entry)
-}
-
 # observed data ----------------------------------------------------------------
 load("data_inter/cohort_conts_gap_changes.RData")
 
-base <- dt_gaps2 %>% filter(sex != "t", ags != "100_109")
-grp  <- c("cts", "sex", "ags")
+res <- exceptionality_criterion(dt_gaps2, k = k_each_side, z = z_thr,
+                                min_cts = min_cts, min_ags = min_ags, L_max = L_max)
 
-flags <- flag_exceptional(base, grp) %>%
-  select(cts, sex, ags, cohort, dt_coh, scc, z_score, exceptional, direction)
+cat("tested contributions:", res$n_tested, " exceptional:", res$n_exceptional,
+    sprintf("(%.1f%%)", res$pct_exceptional), "\n")
 
-tested <- flags %>% filter(!is.na(z_score))
-exceptional <- flags %>% filter(exceptional)
-
-cat("tested contributions:", nrow(tested), " exceptional:", nrow(exceptional),
-    sprintf("(%.1f%%)", 100 * nrow(exceptional) / nrow(tested)), "\n")
-
-disprop <- disproportionate_peaks(flags, min_cts, min_ags)
 cat("\nsingle peaks meeting the criterion (same sign in >=", min_cts, "comparators and >=", min_ags, "age intervals):\n")
-print(as.data.frame(disprop))
+print(as.data.frame(res$peaks))
 
-pairs <- block_pairs(flags, grp, L_max)
-blocks <- disproportionate_blocks(pairs, min_cts, min_ags)
-cat("\nopposite-signed pairs found in the data:", nrow(pairs),
-    "; pairs meeting the replication requirement:", nrow(blocks), "\n")
-if (nrow(blocks) > 0) print(as.data.frame(blocks))
+cat("\nopposite-signed pairs found in the data:", nrow(res$pairs),
+    "; pairs meeting the replication requirement:", nrow(res$blocks), "\n")
+if (nrow(res$blocks) > 0) print(as.data.frame(res$blocks))
 
-cat("\nexceptional contributions by age interval and sex (any comparator):\n")
-print(exceptional %>% count(sex, ags) %>% pivot_wider(names_from = sex, values_from = n, values_fill = 0))
+# Table S5.1: exceptional contributions by age interval, sex and sign
+tab_s5_1 <-
+  res$exceptional %>%
+  count(ags, sex, direction) %>%
+  mutate(sex = ifelse(sex == "f", "women", "men")) %>%
+  pivot_wider(names_from = c(sex, direction), values_from = n, values_fill = 0) %>%
+  select(ags, women_narrowing, women_widening, men_narrowing, men_widening) %>%
+  arrange(ags)
 
-write_csv(exceptional, "data_inter/exceptional_cohorts.csv")
-write_csv(disprop, "data_inter/disproportionate_cohorts.csv")
-write_csv(pairs, "data_inter/block_pairs.csv")
+cat("\nexceptional contributions by age interval, sex and sign (Table S5.1):\n")
+print(as.data.frame(tab_s5_1))
+
+write_csv(res$exceptional, "data_inter/exceptional_cohorts.csv")
+write_csv(res$peaks, "data_inter/disproportionate_cohorts.csv")
+write_csv(res$pairs, "data_inter/block_pairs.csv")
+write_csv(tab_s5_1, "data_inter/tableS5_1_exceptional_by_age_sex.csv")
+
+# alternative reference set (Supplementary Material S1) ------------------------
+load("data_inter/cohort_conts_gap_changes_altref.RData")
+
+res_alt <- exceptionality_criterion(dt_gaps2_alt, k = k_each_side, z = z_thr,
+                                    min_cts = min_cts, min_ags = min_ags, L_max = L_max)
+
+cat("\n--- alternative reference set (", paste(unique(dt_gaps2_alt$cts), collapse = ", "), ")\n",
+    "tested contributions:", res_alt$n_tested, " exceptional:", res_alt$n_exceptional,
+    sprintf("(%.1f%%)", res_alt$pct_exceptional), "\n",
+    "replicated single peaks:", format_peaks(res_alt$peaks), "\n",
+    "opposite-signed pairs found:", nrow(res_alt$pairs),
+    "; replicated pairs:", format_blocks(res_alt$blocks), "\n")
+
+write_csv(res_alt$exceptional, "data_inter/exceptional_cohorts_altref.csv")
 
 # power check on the simulated scenarios ---------------------------------------
 # One simulated comparator, so only the replication across age intervals
@@ -176,7 +122,7 @@ sim <-
   read_rds("data_inter/simulation_scc.rds") %>%
   mutate(scen = str_sub(as.character(scen), 1, 1), cts = "SIM", sex = "t")
 
-flags_sim <- flag_exceptional(sim, c("scen", "ags")) %>%
+flags_sim <- flag_exceptional(sim, c("scen", "ags"), k = k_each_side, z = z_thr) %>%
   filter(exceptional) %>%
   select(scen, ags, cohort, scc, z_score, direction)
 
@@ -198,7 +144,7 @@ print(pairs_sim %>% reframe(n_ags = n_distinct(ags), .by = c(scen, block, entry,
 
 write_csv(flags_sim, "data_inter/exceptional_cohorts_simulation.csv")
 
-# sensitivity --------------------------------------------------------------------
+# sensitivity (Table S5.3) -------------------------------------------------------
 settings <- tribble(
   ~scale, ~k, ~z,
   "mad",  5,  3,      # main
@@ -212,13 +158,12 @@ settings <- tribble(
 
 sens <- map_dfr(seq_len(nrow(settings)), function(i){
   s <- settings[i, ]
-  f <- flag_exceptional(base, grp, k = s$k, z = s$z, scale = s$scale)
-  d <- disproportionate_peaks(f, min_cts, min_ags)
-  b <- disproportionate_blocks(block_pairs(f, grp, L_max), min_cts, min_ags)
+  r <- exceptionality_criterion(dt_gaps2, k = s$k, z = s$z, scale = s$scale,
+                                min_cts = min_cts, min_ags = min_ags, L_max = L_max)
   tibble(scale = s$scale, k_each_side = s$k, z_thr = s$z,
-         pct_exceptional = round(100 * mean(f$exceptional[!is.na(f$z_score)]), 1),
-         peaks = ifelse(nrow(d) == 0, "none", paste(sprintf("%s%d(%s)", d$sex, d$cohort, d$age_groups), collapse = "; ")),
-         blocks = ifelse(nrow(b) == 0, "none", paste(sprintf("%s %d-%d", b$sex, b$entry, b$exit), collapse = "; ")))
+         pct_exceptional = round(r$pct_exceptional, 1),
+         peaks = format_peaks(r$peaks),
+         blocks = format_blocks(r$blocks))
 })
 
 cat("\n--- sensitivity to the scale estimator, the window and the threshold\n")

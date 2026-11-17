@@ -1,7 +1,7 @@
 # ==============================================================================
 # 12. Supplementary Figure S6. Lexis surfaces of the annual changes in the
 #     age-specific contributions to the life expectancy gap between each
-#     reference country and Spain, 1940-2019, ages 0-99, by sex.
+#     reference country and Spain, 1940-2023, ages 0-99, by sex.
 #
 # Each cell is DD_x(y, y+1) = D_{x,y+1} - D_{x,y}: the change, from year y to
 # y + 1, in the (symmetric Arriaga) contribution of age x to the gap in life
@@ -25,7 +25,7 @@ source("code/00_functions.R")
 cts_ref <- c("SWE", "CHE", "NOR", "NLD")
 names_cts <- c(SWE = "Sweden", CHE = "Switzerland", NOR = "Norway", NLD = "Netherlands")
 ymin <- 1940
-ymax <- 2019
+ymax <- 2023
 amin <- 0
 amax <- 99
 

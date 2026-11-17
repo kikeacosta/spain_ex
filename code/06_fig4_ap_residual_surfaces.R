@@ -1,6 +1,6 @@
 # ==============================================================================
 # 06. Figure 4. Lexis surfaces of residuals from an Age-Period-drift model,
-#     Spain 1940-2019, ages 0-99, by sex.
+#     Spain 1940-2023, ages 0-99, by sex.
 #
 # curvature_dAPC() is an adaptation of Epi::apc.fit (Carstensen 2007;
 # https://CRAN.R-project.org/package=Epi): it fits the full APC factor model,
@@ -20,6 +20,7 @@ library(MASS)
 library(splines)
 library(tidyverse)
 library(MortalitySmooth)
+source("code/00_functions.R")   # figure typeface (serif)
 
 select <- dplyr::select
 
@@ -29,7 +30,7 @@ hmd <- read_rds("data_inter/deaths_exposures_hmd.rds")
 curvature_dAPC <- function(amin=0, amax=60, pmin=1990, pmax=2016, gr=1, sx = "female", cd = "ESP"){
   
   amax <- amin - 1 + (floor((amax-amin+1)/gr))*gr
-  pmax <- min(pmax, 2019)
+  pmax <- min(pmax, max(hmd$year[hmd$code == cd])) # last year available
   pmax <- pmin - 1 + (floor((pmax-pmin+1)/gr))*gr
   
   data0 <- 
@@ -472,7 +473,7 @@ curvature_dAPC <- function(amin=0, amax=60, pmin=1990, pmax=2016, gr=1, sx = "fe
 amin <- 0
 amax <- 99
 pmin <- 1940
-pmax <- 2019
+pmax <- 2023
 
 curv_f <- curvature_dAPC(amin = amin, amax = amax, pmin = pmin, pmax = pmax,
                          gr = 1, sx = "female", cd = "ESP")
@@ -540,23 +541,23 @@ for (sx in c("female", "male")) {
                linewidth = 0.2, linetype = "dashed", alpha = 0.8, color = "grey30")+
     scale_x_continuous(expand=c(0,0), breaks=seq(1950, 2020, 10)) +
     scale_y_continuous(expand=c(0,0), breaks=seq(0, 100, 5)) +
-    geom_rect(xmin = 2019.65, xmax = 2032, ymin = -1, ymax = 112,
+    geom_rect(xmin = pmax + .65, xmax = pmax + 13, ymin = -1, ymax = 112,
               fill="white", col = "white")+
-    geom_rect(xmin = 1949, xmax = 2032, ymin = 100.6, ymax = 110.5,
+    geom_rect(xmin = 1949, xmax = pmax + 13, ymin = 100.6, ymax = 110.5,
               fill="white", col = "white")+
-    geom_abline(intercept = seq(-1990, -1900, by = 10), slope = 1,
+    geom_abline(intercept = seq(-2000, -1900, by = 10), slope = 1,
                 linetype="dashed", color="grey30", linewidth=.15, alpha = 0.8)+
-    annotate("text", x = 2022, y = seq(34, 94, by = 10),
-             label = as.character(rev(seq(1930, 1990, by=10))),
+    annotate("text", x = pmax + 3, y = pmax + 5 - seq(2000, 1930, by = -10),
+             label = as.character(seq(2000, 1930, by = -10)),
              size = 2.2, angle = 45, color="grey20") +
     annotate("text", x = seq(1990, 2020, 10), y = 103,
              label = as.character(seq(1890, 1920, by=10)),
              size = 2.2, angle = 45, color="grey20") +
-    annotate("text", x = 2023.5, y = 28.5, label = "Cohort", size = 2.6,
+    annotate("text", x = pmax + 4.5, y = pmax + 5 - 2010 + .5, label = "Cohort", size = 2.6,
              angle = 45, color="grey20") +
     annotate("text", x = 1945, y = 105, label = sx %>% str_to_title(), size = 3.2,
              color="black", hjust = 0) +
-    coord_equal(expand = 0, xlim = c(1939.5, 2028), ylim = c(0, 108))+
+    coord_equal(expand = 0, xlim = c(pmin - .5, pmax + 9), ylim = c(0, 108))+
     labs(y = "Age", x = "Period")+
     theme_minimal()+
     theme(
