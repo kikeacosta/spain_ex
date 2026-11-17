@@ -1,7 +1,7 @@
 # ==============================================================================
 # 10. Supplementary Table S4 (and numbers quoted in the Results). Life
-#     expectancy at birth in Spain and the gap with each reference country and
-#     with their unweighted mean, in 1940, 1950 and 1960, by sex: relative
+#     expectancy at birth in Spain and in each reference country and their
+#     unweighted mean, the gap between them, in 1940, 1950 and 1960, by sex: relative
 #     change of Spanish life expectancy and relative reduction of the gap over
 #     the 1940s, the 1950s and 1940-1960.
 #
@@ -42,6 +42,9 @@ tab <-
   reframe(ex_esp_1940 = ex_esp[year == 1940],
           ex_esp_1950 = ex_esp[year == 1950],
           ex_esp_1960 = ex_esp[year == 1960],
+          ex_ref_1940 = ex_ref[year == 1940],
+          ex_ref_1950 = ex_ref[year == 1950],
+          ex_ref_1960 = ex_ref[year == 1960],
           gap_1940 = gap[year == 1940],
           gap_1950 = gap[year == 1950],
           gap_1960 = gap[year == 1960],

@@ -18,7 +18,7 @@ if (hmd_us == "" | hmd_pw == "") stop("HMD credentials not found: set hmd_us and
 # Spain and the four reference countries used in the manuscript.
 # To download every HMD population instead: cds <- getHMDcountries()$CNTRY
 cds <- c("ESP", "SWE", "NOR", "NLD", "CHE",   # Spain and the reference countries
-         "DNK", "GBRTENW", "FRATNP")         # alternative reference set (Supplementary Figure S1)
+         "DNK", "GBR_NP", "CAN", "BEL")      # alternative reference set (Supplementary Material S1)
 
 dir.create("data_inter", showWarnings = FALSE)
 
