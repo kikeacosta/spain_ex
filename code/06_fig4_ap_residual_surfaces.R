@@ -20,6 +20,7 @@ library(MASS)
 library(splines)
 library(tidyverse)
 library(MortalitySmooth)
+source("code/00_functions.R")   # figure typeface (serif)
 
 select <- dplyr::select
 

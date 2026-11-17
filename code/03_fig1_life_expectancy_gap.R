@@ -10,6 +10,7 @@
 rm(list = ls()); gc()
 library(tidyverse)
 library(patchwork)
+source("code/00_functions.R")   # figure typeface (serif)
 
 e0 <- read_rds("data_inter/e0_hmd.rds")
 

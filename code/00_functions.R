@@ -7,6 +7,18 @@ library(tidyverse)
 options(scipen = 999)
 
 # ------------------------------------------------------------------------------
+# Typeface of the figures: a serif family (Times-like, as in the manuscript),
+# set once here and picked up by every script that sources this file. Each
+# script adds a complete theme (theme_bw() or theme_minimal()) to its plots,
+# which would reset the family to the device default, so both themes are
+# redefined with a serif default; geom_text() and annotate("text") inherit the
+# family from the theme (ggplot2 >= 4.0).
+fig_family <- "serif"
+theme_set(theme_bw(base_family = fig_family))
+theme_bw <- function(..., base_family = fig_family) ggplot2::theme_bw(..., base_family = base_family)
+theme_minimal <- function(..., base_family = fig_family) ggplot2::theme_minimal(..., base_family = base_family)
+
+# ------------------------------------------------------------------------------
 # Arriaga (1984) decomposition of the difference between two (partial) life
 # expectancies into single-age contributions, population 1 taken as the
 # starting point. Internal helper used by est_age_cont().

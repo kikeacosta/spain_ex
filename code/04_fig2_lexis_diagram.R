@@ -10,6 +10,7 @@
 # ==============================================================================
 rm(list = ls()); gc()
 library(tidyverse)
+source("code/00_functions.R")   # figure typeface (serif)
 
 amin <- 0;    amax <- 110
 pmin <- 1930; pmax <- 2030

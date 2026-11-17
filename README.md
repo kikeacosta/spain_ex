@@ -47,7 +47,7 @@ scripts in `code/` in order:
 
 | script | manuscript output |
 |---|---|
-| `00_functions.R` | Arriaga decomposition and cohort-contribution functions (sourced by `07`, `08`, `09`, `12`, `14`), APC fitting and extrema functions (`05`, `14`) and the exceptionality criterion (`11`, `14`) |
+| `00_functions.R` | Arriaga decomposition and cohort-contribution functions (sourced by `07`, `08`, `09`, `12`, `14`), APC fitting and extrema functions (`05`, `14`), the exceptionality criterion (`11`, `14`) and the figure typeface (serif, `theme_bw()` and `theme_minimal()` redefined with `base_family = "serif"`; sourced by every figure script) |
 | `01_hmd_life_tables.R` | downloads e0 and life tables (inputs of Figures 1, 5, S1.1, S7.1 and S8.2 and Tables S1.1, S4 and S7.1) |
 | `02_hmd_deaths_exposures.R` | downloads deaths and exposures (inputs of Figures 3, 4, S2 and S8.1) |
 | `03_fig1_life_expectancy_gap.R` | **Figure 1**: life expectancy 1908-2023 (A) and the gap between Spain and the reference mean (B) |
@@ -88,7 +88,8 @@ is its R port.
 
 ## Requirements
 
-R (>= 4.3) with: `tidyverse`, `HMDHFDplus`, `Epi`, `MASS`, `splines`,
+R (>= 4.3) with: `tidyverse` (`ggplot2` >= 4.0, so that text geoms inherit the
+theme typeface), `HMDHFDplus`, `Epi`, `MASS`, `splines`,
 `MortalitySmooth` (`remotes::install_github("timriffe/MortalitySmooth")`),
 `patchwork`. Exploratory scripts also use `cowplot`, `mgcv`, `scales`, `viridis`.
 
